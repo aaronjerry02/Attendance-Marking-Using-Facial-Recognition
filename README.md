@@ -1,4 +1,4 @@
-# 🧑‍💻 Attendance Marking Using Facial Recognition (Image Verifier in C)
+#  Attendance Marking Using Facial Recognition (Image Verifier in C)
 
 This project is a **C-based image verifier system** for marking attendance.  
 It simulates face recognition by comparing a new image with pre-registered face data.  
@@ -13,8 +13,8 @@ Built entirely using **the C programming language**, this system is a prototype 
 ## Objective
 
 - Pre-register students by storing their face image (in good lighting conditions).
-- Then, verify a student’s identity by comparing a one of the image with stored ones.
-- If matched, mark the student's attendance in a `.csv` file.
+- Then, verify a student’s identity by comparing one of the images with stored ones.
+- If matched, mark the student's attendance in a '.csv' file.
 
 ---
 
