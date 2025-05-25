@@ -26,7 +26,6 @@ Attendance-Marking-Using-Facial-Recognition/
 │   ├── main.c
 │   ├── image_matcher.c
 │   ├── attendance.c
-│   └── ui.c
 ├── include/
 │   ├── image_matcher.h
 │   ├── attendance.h
