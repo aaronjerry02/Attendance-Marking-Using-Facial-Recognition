@@ -1,6 +1,6 @@
-GLOBAL_SESSION_COUNT,15
+total_classes,11
 Person,Times Present,Total Classes,Percentage
-Asha,2,15,13.33
-Isabella,2,15,13.33
-Alex,3,15,20.00
-Malik,8,15,53.33
+Asha,1,11,9.09
+Alex,4,11,36.36
+Malik,9,11,81.82
+UNKNOWN_SESSION,0,11,0.00

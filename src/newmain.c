@@ -9,26 +9,25 @@
 
 #define true 1
 #define false 0
-typedef int boolean; 
+typedef int boolean;
 
-typedef struct AttendanceRecord {
+typedef struct ar {
     char person[MAX_PERSON_NAME_LEN];
     int times_present;
     int total_classes;
-    struct AttendanceRecord *next;
-} AttendanceRecord;
+    struct ar *next;
+} ar;
 
-static int global_session_count = 0;
+static int total_classes = 0;
 
-// Creates a new attendance record
-AttendanceRecord* createRecord(const char* name, int present, int total) {
-    AttendanceRecord* newRecord = (AttendanceRecord*)malloc(sizeof(AttendanceRecord));
+
+ar* createRecord(const char* name, int present, int total) {
+    ar* newRecord = (ar*)malloc(sizeof(ar)); //
     if (newRecord == NULL) {
         perror("Failed to allocate memory");
         return NULL;
     }
     strncpy(newRecord->person, name, MAX_PERSON_NAME_LEN - 1);
-    newRecord->person[MAX_PERSON_NAME_LEN - 1] = '\0';
     newRecord->times_present = present;
     newRecord->total_classes = total;
     newRecord->next = NULL;
@@ -36,9 +35,9 @@ AttendanceRecord* createRecord(const char* name, int present, int total) {
 }
 
 // Frees all records in the linked list
-void freeAttendanceRecords(AttendanceRecord *head) {
-    AttendanceRecord *current = head;
-    AttendanceRecord *next;
+void freeAttendanceRecords(ar *head) {
+    ar *current = head;
+    ar *next;
     while (current != NULL) {
         next = current->next;
         free(current);
@@ -47,27 +46,27 @@ void freeAttendanceRecords(AttendanceRecord *head) {
 }
 
 // Reads attendance records from CSV
-AttendanceRecord *readAttendanceRecords() {
+ar *readAttendanceRecords() {
     FILE *file = fopen(CSV_FILENAME, "r");
     if (file == NULL) {
-        global_session_count = 0;
+        total_classes = 0;
         return NULL;
     }
 
-    AttendanceRecord *head = NULL;
-    AttendanceRecord *tail = NULL;
+    ar *head = NULL;
+    ar *tail = NULL;
     char line[256];
 
     // Read TOTAL session count
     if (fgets(line, sizeof(line), file) != NULL) {
-        if (sscanf(line, "GLOBAL_SESSION_COUNT,%d", &global_session_count) != 1) {
-            fprintf(stderr, "Warning: Could not read global session count. Resetting to 0.\n");
-            global_session_count = 0;
+        if (sscanf(line, "total_classes,%d", &total_classes) != 1) {
+           + fprintf(stderr, "Warning: Could not read global session count. Resetting to 0.\n");
+            total_classes = 0;
         }
     } else {
-        global_session_count = 0;
+        total_classes= 0;
     }
-    
+
     // Read and discard the header line for data 
     if (fgets(line, sizeof(line), file) == NULL) {
         fclose(file);
@@ -80,10 +79,8 @@ AttendanceRecord *readAttendanceRecords() {
         int total_classes;
         double dummy_percentage;
 
-        
-        if (sscanf(line, "%49[^,],%d,%d,%lf", 
-                         person, &times_present, &total_classes, &dummy_percentage) == 4) { 
-            AttendanceRecord *newRecord = createRecord(person, times_present, total_classes);
+        if (sscanf(line, "%49[^,],%d,%d,%lf", person, &times_present, &total_classes, &dummy_percentage) == 4) {
+            ar *newRecord = createRecord(person, times_present, total_classes);
             if (newRecord == NULL) {
                 freeAttendanceRecords(head);
                 fclose(file);
@@ -96,9 +93,8 @@ AttendanceRecord *readAttendanceRecords() {
                 tail->next = newRecord;
                 tail = newRecord;
             }
-        } else if (sscanf(line, "%49[^,],%d,%d", 
-                         person, &times_present, &total_classes) == 3) {
-             AttendanceRecord *newRecord = createRecord(person, times_present, total_classes);
+        } else if (sscanf(line, "%49[^,],%d,%d", person, &times_present, &total_classes) == 3) {
+            ar *newRecord = createRecord(person, times_present, total_classes);
             if (newRecord == NULL) {
                 freeAttendanceRecords(head);
                 fclose(file);
@@ -111,8 +107,7 @@ AttendanceRecord *readAttendanceRecords() {
                 tail->next = newRecord;
                 tail = newRecord;
             }
-        }
-        else {
+        } else {
             fprintf(stderr, "Warning: Skipping malformed line: %s", line);
         }
     }
@@ -121,27 +116,26 @@ AttendanceRecord *readAttendanceRecords() {
 }
 
 // Writes attendance records to CSV
-void writeAttendanceRecords(AttendanceRecord *head) {
+void writeAttendanceRecords(ar *head) {
     FILE *file = fopen(CSV_FILENAME, "w");
     if (file == NULL) {
         perror("Failed to open CSV file for writing");
         return;
     }
-    fprintf(file, "GLOBAL_SESSION_COUNT,%d\n", global_session_count);
+    fprintf(file, "total_classes,%d\n", total_classes);
     fprintf(file, "Person,Times Present,Total Classes,Percentage\n");
 
-    AttendanceRecord *current = head;
+    ar *current = head;
     while (current != NULL) {
         double percentage = 0.0;
         if (current->total_classes > 0) {
             percentage = ((double)current->times_present / current->total_classes) * 100.0;
         }
-        // Write percentage to CSV
         fprintf(file, "%s,%d,%d,%.2f\n",
-                         current->person,
-                         current->times_present,
-                         current->total_classes,
-                         percentage);
+                current->person,
+                current->times_present,
+                current->total_classes,
+                percentage);
         current = current->next;
     }
     fclose(file);
@@ -149,14 +143,14 @@ void writeAttendanceRecords(AttendanceRecord *head) {
 
 // Processes attendance for a recognized person or an unknown session
 void processAttendance(const char *person_name, boolean was_recognized_and_known) {
-    AttendanceRecord *head = readAttendanceRecords();
+    ar *head = readAttendanceRecords();
 
-    global_session_count++;
-    printf("Total session count incremented to: %d\n", global_session_count);
+    total_classes++;
+    printf("Total session count incremented to: %d\n", total_classes);
 
-    AttendanceRecord *current = head;
+    ar *current = head;
     while (current != NULL) {
-        current->total_classes = global_session_count;
+        current->total_classes = total_classes;
         current = current->next;
     }
 
@@ -168,7 +162,8 @@ void processAttendance(const char *person_name, boolean was_recognized_and_known
                 current->times_present++;
                 printf("Attendance logged for: %s (Times Present: %d)\n", person_name, current->times_present);
             } else {
-                printf("Record found for %s, but attendance not incremented.\n", person_name);
+                current->times_present++;
+                printf("Record not found for %s \n", person_name);
             }
             found = true;
             break;
@@ -177,10 +172,10 @@ void processAttendance(const char *person_name, boolean was_recognized_and_known
     }
 
     if (!found) {
-        AttendanceRecord *newRecord = createRecord(
+        ar *newRecord = createRecord(
             person_name,
             was_recognized_and_known ? 1 : 0,
-            global_session_count);
+            total_classes);
 
         if (newRecord == NULL) {
             freeAttendanceRecords(head);
@@ -207,7 +202,7 @@ void processAttendance(const char *person_name, boolean was_recognized_and_known
 
 // Displays all attendance records in tabular format
 void displayAttendanceRecords() {
-    AttendanceRecord* head = readAttendanceRecords(); // Read fresh records for display
+    ar *head = readAttendanceRecords();
     printf("\n--- Attendance Records ---\n");
     printf("%-20s %-15s %-15s %-15s\n", "Person", "Times Present", "Total Classes", "Percentage");
     printf("----------------------------------------------------------------------------------\n");
@@ -215,32 +210,31 @@ void displayAttendanceRecords() {
     if (head == NULL) {
         printf("No attendance records found.\n");
     } else {
-        AttendanceRecord *current = head;
+        ar *current = head;
         while (current != NULL) {
             double percentage = 0.0;
             if (current->total_classes > 0) {
                 percentage = ((double)current->times_present / current->total_classes) * 100.0;
             }
             printf("%-20s %-15d %-15d %-14.2f%%\n",
-                             current->person,
-                             current->times_present,
-                             current->total_classes,
-                             percentage);
+                   current->person,
+                   current->times_present,
+                   current->total_classes,
+                   percentage);
             current = current->next;
         }
     }
     printf("----------------------------------------------------------------------------------\n");
-    freeAttendanceRecords(head); // Free after display
+    freeAttendanceRecords(head);
 }
 
-// Executes Python script and reads recognized name
 boolean getRecognizedName(char *recognized_name_buffer, size_t buffer_size) {
     int system_status = system(PYTHON_SCRIPT_PATH);
     if (system_status != 0) {
         fprintf(stderr, "Error: Python script failed with status %d.\n", system_status);
         return false;
     }
-    
+
     FILE *file = fopen(RECOGNIZED_NAME_FILE, "r");
     if (file == NULL) {
         perror("Error: Could not open recognized name file");
@@ -250,7 +244,6 @@ boolean getRecognizedName(char *recognized_name_buffer, size_t buffer_size) {
     if (fgets(recognized_name_buffer, buffer_size, file) != NULL) {
         recognized_name_buffer[strcspn(recognized_name_buffer, "\n")] = '\0';
         fclose(file);
-        // This is the only printf you want to keep if a name is recognized.
         printf("Recognized name: '%s'\n", recognized_name_buffer);
         return true;
     } else {
@@ -295,7 +288,6 @@ int main() {
         }
     }
 
-    // Final display of records from the CSV file before exiting
     printf("\n--- Final Attendance Summary from CSV ---\n");
     displayAttendanceRecords();
 
